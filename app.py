@@ -10,7 +10,6 @@ def generate_board(rows, cols, mines):
     board = np.zeros((rows, cols), dtype=int)
     mine_positions = set()
 
-    # Place mines
     while len(mine_positions) < mines:
         r = np.random.randint(rows)
         c = np.random.randint(cols)
@@ -19,7 +18,6 @@ def generate_board(rows, cols, mines):
     for (r, c) in mine_positions:
         board[r, c] = -1
 
-    # Calculate numbers
     for r in range(rows):
         for c in range(cols):
             if board[r, c] == -1:
@@ -63,9 +61,8 @@ if "board" not in st.session_state:
     st.session_state.game_over = False
     st.session_state.win = False
 
-
 # -----------------------------
-# Sidebar Settings
+# Sidebar
 # -----------------------------
 with st.sidebar:
     st.header("⚙️ Settings")
@@ -81,11 +78,11 @@ with st.sidebar:
         st.session_state.visible = np.array([[" "] * cols for _ in range(rows)])
         st.session_state.game_over = False
         st.session_state.win = False
-        st.experimental_rerun()
+        st.rerun()
 
 
 # -----------------------------
-# Game UI
+# Header text
 # -----------------------------
 st.title("💣 Minesweeper")
 
@@ -95,38 +92,42 @@ elif st.session_state.win:
     st.success("🎉 You win! All safe cells uncovered.")
 
 
-# Render grid
+# -----------------------------
+# Board UI
+# -----------------------------
 for r in range(st.session_state.rows):
-    cols_ui = st.columns(st.session_state.cols)
+    col_ui = st.columns(st.session_state.cols)
     for c in range(st.session_state.cols):
         cell_val = st.session_state.visible[r][c]
 
+        # Hidden cell button
         if cell_val == " " and not st.session_state.game_over:
-            if cols_ui[c].button(" ", key=f"{r}-{c}"):
+            if col_ui[c].button(" ", key=f"{r}-{c}"):
+                # Mine?
                 if st.session_state.board[r][c] == -1:
-                    # Mine hit
                     st.session_state.game_over = True
                     st.session_state.visible = np.where(
                         st.session_state.board == -1, "X", st.session_state.visible
                     )
                 else:
-                    reveal_cell(
-                        st.session_state.visible, r, c, st.session_state.board
-                    )
-                st.experimental_rerun()
+                    reveal_cell(st.session_state.visible, r, c, st.session_state.board)
+
+                st.rerun()
+
         else:
-            # Show revealed cell
-            style = (
-                "background-color:#ff4d4d;color:white;"
-                if cell_val == "X"
+            # Revealed cell
+            color = (
+                "background-color:#ff4d4d;color:white;" if cell_val == "X"
                 else "background-color:#e0e0e0;"
             )
-            cols_ui[c].markdown(
-                f"<div style='text-align:center;padding:8px;{style}'>{cell_val}</div>",
+            col_ui[c].markdown(
+                f"<div style='text-align:center;padding:8px;{color}'>{cell_val}</div>",
                 unsafe_allow_html=True,
             )
 
-# Check win
+# -----------------------------
+# Win detection
+# -----------------------------
 if not st.session_state.game_over:
     unrevealed = (st.session_state.visible == " ").sum()
     if unrevealed == st.session_state.mines:
@@ -134,4 +135,4 @@ if not st.session_state.game_over:
         st.session_state.visible = np.where(
             st.session_state.board == -1, "X", st.session_state.visible
         )
-        st.experimental_rerun()
+        st.rerun()
